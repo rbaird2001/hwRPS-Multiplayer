@@ -4,3 +4,7 @@
     height: 80px;
     overflow: scroll  
 }
+
+#rpslpChoices{
+    display: none;
+}

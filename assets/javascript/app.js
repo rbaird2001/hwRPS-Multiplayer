@@ -15,98 +15,129 @@ firebase.initializeApp(firebaseConfig);
 
 let db = firebase.firestore();
 let selectionOutcomes = db.collection("selectionOutcomes");
+let playID = db.collection("plays").doc("game");
 let chatter = db.collection("plays").doc("chat");
 let rpslp = {} //short for Rock, Paper, Scissors, Lizard, sPock
-let playID = "";
-//let roundID = "";
-let p1Played = null;
-let p2Played = null;
+let playerNum = ""
+let otherPlayer = ""
+let opponentName = ""
+let yourPlay = null;
 let winner = "";
+let firstGame = 1
+
+playID.set({reset : true});
 
 $("#newPlay").click(function () {
-    let p1 = "Player 1" //$("#p1Name").val()
-    let p2 = "Player 2" //$("#p2Name").val()
-    $("input[name='p1']").prop("checked",false);
-    $("input[name='p2']").prop("checked",false);
-    p1Played = null;
+    let pName = $("#playerName").val();
+    if(!pName){
+        $("#playerName").addClass("border border-danger").attr("placeholder","Name is required.");
+        return false;
+    }
+    else{
+        $("#playerName").removeClass("border border-danger").attr("placeholder","");
+    }
+    yourPlay = null;
     p2Played = null;
     rpslp = {};
     winner = null;
-    playID = db.collection("plays").doc("game")
     playID.onSnapshot(function(){});
-    console.log(p1 + " vs " + p2);
-    if (p1 && p2) {
-        selectionOutcomes.get().then(function (snap) {
-            snap.forEach(function (doc) {
-                rpslp[doc.id] = doc.data();
-            });
-        })
+    playID.get().then(function(doc){
+        let p1Set = doc.data().p1
+        if(!p1Set){
             playID.set({
-                player1: p1,
-                player2: p2,
+                p1: pName,
+                p2: "",
                 p1Choice: "",
                 p2Choice: "",
                 pWinner: "",
-                p1Wins: 0,
-                p2Wins: 0,
-            })
-    }
+            }).then(function(){
+                playerNum = "p1"
+                otherPlayer = "p2"
+                $("#playerLabel").text("You are Player 1");
+                $("input[name='p1']").prop("checked",false);
+                $("#rpslpChoices").css("display", "block");
+                $("#playerName").val("Waiting for Player 2");
+                $("#newPlay").css("display","none");
+            });
+        }
+        else{
+            playID.update({
+                p2: pName,
+            }).then(function(){
+                selectionOutcomes.get().then(function (snap) {
+                    snap.forEach(function (doc) {
+                        rpslp[doc.id] = doc.data();
+                    });
+                })
+                playID.get().then(function(doc){
+                    opponentName = doc.data().p1;
+                    $("#playerLabel").text("You are Player 2");
+                    $("#playerName").val("").attr("placeholder","You are playing " + opponentName)
+                    $("input[name='p1']").prop("checked",false);
+                    $("#rpslpChoices").css("display", "block");
+                    $("#newPlay").css("display","none");
+                })
+                playerNum = "p2";
+                otherPlayer = "p1";
+
+
+
+
+            });
+        }
+    })
 });
 
+$("#replay").click(function(){
+    clearTimeout(replayTimer);
+    playID.onSnapshot(function(){});
+    playID.update({
+        p1Choice : "",
+        p2Choice : "",
+        pWinner : ""
+    }).then(function(){
+        $("input[name='p1']").prop("checked",false);
+    })
+})
+
 $("input[name='p1']").click(function () {
-    p1Played = $(this).val();
-    playID.update({ p1Choice: p1Played }).then(function(){
+    yourPlay = $(this).val();
+    let choiceProperty = playerNum + "Choice"
+    playID.update({ [choiceProperty]: yourPlay }).then(function(){
         playID.onSnapshot(function(snap){
             getWinner = snap.data().pWinner;
             if(getWinner){
-                $("#winner").html(getWinner);
-            };
+                $("#playerLabel").html("Winner: " + getWinner);
+            }
         });
         playID.get().then(function(doc){
             let curPlay = doc.data();
-            let p2c = curPlay.p2Choice;
-            if(p2c){
-                outcome = rpslp[p1Played][p2c]
+            let otherChoice = "";
+            if (playerNum === "p1"){
+                otherChoice = curPlay.p2Choice;
+            }
+            else{
+                otherChoice = curPlay.p1Choice;
+            }
+            if(otherChoice){
+                outcome = rpslp[yourPlay][otherChoice];
                 if(outcome === 1){
-                    winner = curPlay.player1;
+                    winner = curPlay[playerNum];
                 }
                 else if(outcome === 0){
-                    winner = curPlay.player2;
+                    winner = curPlay[otherPlayer];
                 }
                 else {winner = "Draw";}
                 playID.update({pWinner: winner})
-            }
-        })    
-    });
-
-});
-
-$("input[name='p2']").click(function () {
-    p2Played = $(this).val();
-    playID.update({ p2Choice: p2Played }).then(function(){
-        playID.onSnapshot(function(snap){
-            getWinner = snap.data().pWinner;
-            if(getWinner){
-                $("#winner").html(getWinner)
-            };
-        });
-        playID.get().then(function(doc){
-            let curPlay = doc.data();
-            let p1c = curPlay.p1Choice
-            console.log(p2Played)
-            if(p1c){
-                let outcome = rpslp[p2Played][p1c]
-                if(outcome === 1){
-                    winner = curPlay.player2;
+                $("#replay").css("display","inline-block")
+                replayTimer = setTimeout(function(){
+                    playID.set({reset : true});
+                    $("#replay").css("display","none");
+                    $("#playerName").val("").attr("placeholder","Enter your name");
                 }
-                else if(outcome === 0){
-                    winner = curPlay.player1;
-                }
-                else {winner = "Draw";}  
-                playID.update({pWinner: winner})
+                ,20000);
             }
-    
-        })    
+        });    
     });
 
 });
@@ -115,30 +146,10 @@ chatter.onSnapshot(function(snap){
     let msg = snap.data().message;
     let newMessage = $("<p>").text(msg);
     $("#chatBox").prepend(newMessage);
-})
+});
 
 $("#sendMsg").click(function(){
     let newMessage = $("#newMsg").val();
-    chatter.set({message : newMessage});
-})
+    chatter.update({message : newMessage});
+});
 
-
-// function analyzePlay(pid) {
-//     pid.onSnapshot(function (doc) {
-//         console.log("snapshot triggered")
-        // outcome = rpslp[p1Played][p2Played];
-        // console.log(outcome);
-        // if (pid.p1Choice && pid.p2Choice) {
-        //     if (outcome === 0) {
-        //         pid.update({ winner: p1 });
-        //     }
-        //     else if (outcome === 1) {
-        //         pid.update({ winner: p2 });
-        //     }
-        //     else {
-        //         pid.update({ winner: "Draw" })
-        //     }
-        // }
-        //pid.onSnapshot(function(){});
-//     });
-// }
