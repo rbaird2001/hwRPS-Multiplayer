@@ -25,6 +25,8 @@ let winner = "";
 $("#newPlay").click(function () {
     let p1 = "Smash BuffBody" //$("#p1Name").val()
     let p2 = "Stump BoneMeal" //$("#p2Name").val()
+    $("input[name='p1']").prop("checked",false);
+    $("input[name='p2']").prop("checked",false);
     p1Played = null;
     p2Played = null;
     rpslp = {};
