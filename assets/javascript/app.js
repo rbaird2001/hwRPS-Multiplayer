@@ -15,6 +15,7 @@ firebase.initializeApp(firebaseConfig);
 
 let db = firebase.firestore();
 let selectionOutcomes = db.collection("selectionOutcomes");
+let chatter = db.collection("plays").doc("chat");
 let rpslp = {} //short for Rock, Paper, Scissors, Lizard, sPock
 let playID = "";
 //let roundID = "";
@@ -23,8 +24,8 @@ let p2Played = null;
 let winner = "";
 
 $("#newPlay").click(function () {
-    let p1 = "Smash BuffBody" //$("#p1Name").val()
-    let p2 = "Stump BoneMeal" //$("#p2Name").val()
+    let p1 = "Player 1" //$("#p1Name").val()
+    let p2 = "Player 2" //$("#p2Name").val()
     $("input[name='p1']").prop("checked",false);
     $("input[name='p2']").prop("checked",false);
     p1Played = null;
@@ -109,6 +110,17 @@ $("input[name='p2']").click(function () {
     });
 
 });
+
+chatter.onSnapshot(function(snap){
+    let msg = snap.data().message;
+    let newMessage = $("<p>").text(msg);
+    $("#chatBox").prepend(newMessage);
+})
+
+$("#sendMsg").click(function(){
+    let newMessage = $("#newMsg").val();
+    chatter.set({message : newMessage});
+})
 
 
 // function analyzePlay(pid) {

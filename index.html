@@ -10,7 +10,8 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-</head>
+    <link rel="stylesheet" href="assets/css/style.css">
+    </head>
 
 <body>
     <div class="container">
@@ -36,7 +37,7 @@
         <button id="newPlay" class="btn btn-primary" type="submit">Start Playing</button>
     </div>
 
-    <div class="container">
+    <div class="container">player 1
         <div class="form-group" id="p1Choices">
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="p1" id="p1Rock" value="rock">
@@ -71,9 +72,9 @@
         </div>
     </div>
 
-    <br><br>
+    <br>
 
-    <div class="container" id="p2Choices">
+    <div class="container" id="p2Choices">Player 2
         <div class="form-group">
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="p2" id="p1Rock" value="rock">
@@ -106,7 +107,16 @@
                 </label>
             </div>
         </div>
+    </div>
 
+    <div class="container" id="chat">
+        <div id="chatBox" class="border border-dark">
+            <p>old macdonald had a farm</p>
+            <p>ei ei oh.</p>
+            <p>and on this farm he had a pig.</p>
+        </div>
+        <input name="newMsg" id="newMsg" class="border border-dark" ><button id="sendMsg" class="btn btn-secondary" type="submit">Send</button>
+    </div>
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->
         <div id="scripts">
             <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
