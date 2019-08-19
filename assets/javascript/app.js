@@ -20,11 +20,17 @@ let playID = "";
 //let roundID = "";
 let p1Played = null;
 let p2Played = null;
-let winner = ""
+let winner = "";
 
 $("#newPlay").click(function () {
     let p1 = "Smash BuffBody" //$("#p1Name").val()
     let p2 = "Stump BoneMeal" //$("#p2Name").val()
+    p1Played = null;
+    p2Played = null;
+    rpslp = {};
+    winner = null;
+    playID = db.collection("plays").doc("game")
+    playID.onSnapshot(function(){});
     console.log(p1 + " vs " + p2);
     if (p1 && p2) {
         selectionOutcomes.get().then(function (snap) {
@@ -32,8 +38,6 @@ $("#newPlay").click(function () {
                 rpslp[doc.id] = doc.data();
             });
         })
-        playID = db.collection("plays").doc("game")
-            console.log(playID);
             playID.set({
                 player1: p1,
                 player2: p2,
@@ -58,7 +62,7 @@ $("input[name='p1']").click(function () {
         playID.get().then(function(doc){
             let curPlay = doc.data();
             let p2c = curPlay.p2Choice;
-            if(curPlay.p2Choice){
+            if(p2c){
                 outcome = rpslp[p1Played][p2c]
                 if(outcome === 1){
                     winner = curPlay.player1;
@@ -67,12 +71,7 @@ $("input[name='p1']").click(function () {
                     winner = curPlay.player2;
                 }
                 else {winner = "Draw";}
-                playID.onSnapshot(function(snap){
-                    $("winner").html(snap.data().winner)
-                });
-                playID.update({pWinner: winner}).then(function(){
-                    playID.onSnapshot(function(){})
-                });
+                playID.update({pWinner: winner})
             }
         })    
     });
@@ -92,7 +91,7 @@ $("input[name='p2']").click(function () {
             let curPlay = doc.data();
             let p1c = curPlay.p1Choice
             console.log(p2Played)
-            if(curPlay.p1Choice){
+            if(p1c){
                 let outcome = rpslp[p2Played][p1c]
                 if(outcome === 1){
                     winner = curPlay.player2;
@@ -101,8 +100,8 @@ $("input[name='p2']").click(function () {
                     winner = curPlay.player1;
                 }
                 else {winner = "Draw";}  
+                playID.update({pWinner: winner})
             }
-            playID.update({pWinner: winner})
     
         })    
     });
