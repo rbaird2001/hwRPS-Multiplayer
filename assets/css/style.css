@@ -1,8 +1,12 @@
 
 #chatBox{
-    width: 85%;
-    height: 80px;
+    width: 99%;
+    height: 150px;
     overflow: scroll  
+}
+
+#newMsg{
+    width:100%;
 }
 
 #rpslpChoices{
