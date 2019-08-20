@@ -4,6 +4,10 @@ Rock Paper Scissors Lizard Spock
 ## Description
 This project is in its most basic form. It allows multiplayers, but only two can play at a time. Attempts to launch a third or fourth page into this will have negative consequences. This will be addressed in the future.
 
+This project demonstrates the use of cloud-based database systems, namely Firebase. The use of realtime updates supplies multi-player interactivity. However, it also shows limitation in a cloud-system for storage only without cloud-server functions for data processing. It is most likely the case that this project will advance to a Node.js implementation in the future. 
+
+This project also proves the value of JS objects in making selections with varying outcomes. Using objects to resolve the winner for each player's selections removed the need for _if_ statements to accomplish this. The reason for extending game to a five selection option, was to test if one could increase the game selections without exponentionally increasing the coding needed.
+
 ## Getting Started
 Make a fork of this project to your own repository and clone it to your workspace. Create your own Firebase project and use the Firestore database. The access to Firebase in this game will be restricted by the author in the future.
 
