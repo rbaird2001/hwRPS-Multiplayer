@@ -32,16 +32,16 @@ let yourPlay = "";
 let winner = "";
 
 //ensure the collection docs are reset on start
-playID.get().then(function (doc){
-    if(doc.data().gameStatus==="waiting"){
+playID.get().then(function (doc) {
+    if (doc.data().gameStatus === "waiting") {
         setupFirestoreListener()
         return true;
     }
     playID.set({ reset: true });
     chatter.set({
         message: "",
-        p1: "",
-        p2: ""
+        chatName: "",
+
     });
     setupFirestoreListener()
 });
@@ -57,7 +57,6 @@ $("#newPlay").click(function () {
         $("#playerName").removeClass("border border-danger").attr("placeholder", "");
     }
     yourPlay = null;
-    rpslp = {};
     winner = null;
 
     // selectionOutcomes.get().then(function (snap) {
@@ -153,37 +152,40 @@ $("#replay").click(function () {
             playID.update({
                 gameStatus: "requestReplay",
                 replayRequester: player,
-                p1Choice : "",
-                p2Choice : "",
-                pWinMethod : "",
-                pWinner : ""
+                p1Choice: "",
+                p2Choice: "",
+                pWinMethod: "",
+                pWinner: ""
             })
         }
-        //playID.onSnapshot(function (){});
         else if (replayStatus === "requestReplay") {
             playID.update({ gameStatus: "playing" });
         }
     });
 });
 
-
-//TODO: add player name, not just player number.
 chatter.onSnapshot(function (snap) {
-    let chatBoi = snap.data().chatter
-    if(chatBoi){
+    let chName = snap.data().chatName
+    if (chName) {
         let msg = snap.data().message;
-        let newMessage = $("<p>").text(chatBoi + ": " + msg);
+        let newMessage = $("<p>").text(chName + ": " + msg);
         $("#chatBox").prepend(newMessage);
     }
     return false;
 });
 
 $("#sendMsg").click(function () {
-    let newMessage = $("#newMsg").val();
-    chatter.update({
-        message: newMessage,
-        chatter: player
-    });
+    if(!player){
+        $("#newMsg").val("").attr("placeholder","Chat requires the game to start");
+    }
+    else{
+
+        let newMessage = $("#newMsg").val();
+        chatter.update({
+            message: newMessage,
+            chatName: player
+        });
+    }
 });
 
 //what is returned to players is largely determined by player submissions and by game status.
@@ -216,8 +218,8 @@ function setupFirestoreListener() {
                 $("#playerLabel").html("You are player " + player)
                 $("#playerName").val("").attr("placeholder", "You are playing " + opponentName);
             }
-            $("#replay").css("display","none");
-            $("input[name='p1']").attr("disabled", false).prop("checked",false);
+            $("#replay").css("display", "none");
+            $("input[name='p1']").attr("disabled", false).prop("checked", false);
             $("#rpslpChoices").css("display", "block");
         }
         if (gStatus === "finished") {
@@ -230,7 +232,7 @@ function setupFirestoreListener() {
                 $("#replay").css("display", "inline-block");
                 return true;
             }
-            else{
+            else {
                 return false;
             }
         }
@@ -239,12 +241,12 @@ function setupFirestoreListener() {
             if (rRequester === player) {
                 $("#playerLabel").html("You are player " + player);
                 $("#playerName").attr("placeholder", "Waiting for " + opponentName).val("");
-                $("#replay").css("display","none");
+                $("#replay").css("display", "none");
             }
-            
-            else{
+
+            else {
                 $("#playerLabel").html("You are player " + player);
-                $("#playerName").attr("placeholder",opponentName + " has requested a replay.");
+                $("#playerName").attr("placeholder", opponentName + " has requested a replay.");
                 return true;
             }
         }
