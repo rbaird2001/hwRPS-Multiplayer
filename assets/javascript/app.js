@@ -1,5 +1,4 @@
 
-
 // Your web app's Firebase configuration
 var firebaseConfig = {
     apiKey: "AIzaSyC1nlsPzD47URLFbroPfG5aOyZREqH_-4k",
@@ -25,7 +24,6 @@ let chatter = db.collection("plays").doc("chat");
 
 //object to store the selectionOutcomes locally
 //rpslp is short for Rock, Paper, Scissors, Lizard, sPock
-let rpslp = {};
 let playerNum = "";
 let player = "";
 let otherPlayer = "";
@@ -149,7 +147,6 @@ $("input[name='p1']").click(function () {
 
 //This is for playing again without resetting the entire interface.
 $("#replay").click(function () {
-    //clearTimeout(replayTimer);
     playID.get().then(function (doc) {
         let replayStatus = doc.data().gameStatus
         if (replayStatus === 'finished') {
@@ -172,19 +169,25 @@ $("#replay").click(function () {
 
 //TODO: add player name, not just player number.
 chatter.onSnapshot(function (snap) {
-    let msg = snap.data().message;
-    let newMessage = $("<p>").text(playerNum + ": " + msg);
-    $("#chatBox").prepend(newMessage);
+    let chatBoi = snap.data().chatter
+    if(chatBoi){
+        let msg = snap.data().message;
+        let newMessage = $("<p>").text(chatBoi + ": " + msg);
+        $("#chatBox").prepend(newMessage);
+    }
+    return false;
 });
 
 $("#sendMsg").click(function () {
     let newMessage = $("#newMsg").val();
     chatter.update({
         message: newMessage,
-
+        chatter: player
     });
 });
 
+//what is returned to players is largely determined by player submissions and by game status.
+//this listener examines data changes against status. It returns to player appropriate responses.
 function setupFirestoreListener() {
     playID.onSnapshot(function (snap) {
         let gStatus = snap.data().gameStatus;
@@ -232,7 +235,7 @@ function setupFirestoreListener() {
             }
         }
         if (gStatus === "requestReplay") {
-            rRequester = snap.data().replayRequester
+            rRequester = snap.data().replayRequester;
             if (rRequester === player) {
                 $("#playerLabel").html("You are player " + player);
                 $("#playerName").attr("placeholder", "Waiting for " + opponentName).val("");
