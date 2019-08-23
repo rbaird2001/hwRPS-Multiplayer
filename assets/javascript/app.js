@@ -24,27 +24,34 @@ let playID = db.collection("plays").doc("game");
 let chatter = db.collection("plays").doc("chat");
 
 //object to store the selectionOutcomes locally
-//rpslc is short for Rock, Paper, Scissors, Lizard, sPock
-let rpslp = {}
-
-let playerNum = ""
-let otherPlayer = ""
-let opponentName = ""
+//rpslp is short for Rock, Paper, Scissors, Lizard, sPock
+let rpslp = {};
+let playerNum = "";
+let player = "";
+let otherPlayer = "";
+let opponentName = "";
 let yourPlay = "";
 let winner = "";
 
 //ensure the collection docs are reset on start
-playID.set({ reset: true });
-chatter.set({
-    message: "",
-    p1: "",
-    p2: ""
-})
+playID.get().then(function (doc){
+    if(doc.data().gameStatus==="waiting"){
+        setupFirestoreListener()
+        return true;
+    }
+    playID.set({ reset: true });
+    chatter.set({
+        message: "",
+        p1: "",
+        p2: ""
+    });
+    setupFirestoreListener()
+});
 
-//play is setu and initiated by this button
+//play is setup and initiated by this button
 $("#newPlay").click(function () {
-    let pName = $("#playerName").val();
-    if (!pName) {
+    player = $("#playerName").val();
+    if (!player) {
         $("#playerName").addClass("border border-danger").attr("placeholder", "Name is required.");
         return false;
     }
@@ -54,85 +61,50 @@ $("#newPlay").click(function () {
     yourPlay = null;
     rpslp = {};
     winner = null;
-    playID.onSnapshot(function () { }); //this ensures no unexpected realime update actions occur
+
+    // selectionOutcomes.get().then(function (snap) {
+    //     snap.forEach(function (doc) {
+    //         rpslp[doc.id] = doc.data();
+    //     });
+    // });
 
     //determine if player will be player 1 or player 2. Based on whoever adds name first.
     playID.get().then(function (doc) {
         let p1Set = doc.data().p1
         if (!p1Set) {
+            playerNum = "p1"
+            otherPlayer = "p2"
             playID.set({
-                p1: pName,
+                p1: player,
                 p2: "",
                 p1Choice: "",
                 p2Choice: "",
                 pWinner: "",
-            }).then(function () {
-                playID.onSnapshot(function (snap) {
-                    let opponentName = snap.data().p2
-                    if (opponentName) {
-                        $("#rpslpChoices").css("display", "block");
-                        $("#playerName").val("").attr("placeholder", "You are playing " + opponentName)
-                        playID.onSnapshot(function () { });
-                    }
-                })
-
-                playerNum = "p1"
-                otherPlayer = "p2"
-                $("#playerLabel").text("You are Player 1");
-                $("#playerName").val("Waiting for Player 2");
-                $("#newPlay").css("display", "none");
+                gameStatus: "waiting",
+                replayRequester: ""
             });
-            selectionOutcomes.get().then(function (snap) {
-                snap.forEach(function (doc) {
-                    rpslp[doc.id] = doc.data();
-                });
-            })
         }
         else {
+            playerNum = "p2";
+            otherPlayer = "p1";
             playID.update({
-                p2: pName,
-            }).then(function () {
-                selectionOutcomes.get().then(function (snap) {
-                    snap.forEach(function (doc) {
-                        rpslp[doc.id] = doc.data();
-                    });
-                })
-                playID.get().then(function (doc) {
-                    opponentName = doc.data().p1;
-                    $("#playerLabel").text("You are Player 2");
-                    $("#playerName").val("").attr("placeholder", "You are playing " + opponentName)
-                    $("input[name='p1']").prop("checked", false);
-                    $("#rpslpChoices").css("display", "block");
-                    $("#newPlay").css("display", "none");
-                })
-                playerNum = "p2";
-                otherPlayer = "p1";
+                p2: player,
+                gameStatus: "playing"
             });
         }
-    })
+    });
 });
 
-
+//Analyze play after selection made. 
 $("input[name='p1']").click(function () {
     yourPlay = $(this).val();
+    $("input[name='p1']").attr("disabled", true);
+    rpslk = db.collection(yourPlay);
     let choiceProperty = playerNum + "Choice"
-    playID.update({ [choiceProperty]: yourPlay }).then(function () {
-        playID.onSnapshot(function (snap) {
-            getWinner = snap.data().pWinner;
-            if (getWinner) {
-                $("#playerLabel").html("Winner: " + getWinner);
-                $("#replay").css("display", "inline-block")
-                replayTimer = setTimeout(function () {
-                    playID.set({ reset: true });
-                    $("#playerName").val("").attr("placeholder", "Enter your name");
-                    $("#playerLabel").text("Enter your name");
-                    $("#rpslpChoices").css("display", "none");
-                    $("#replay").css("display", "none");
-                    $("#newPlay").css("display", "inline-block");
-                }
-                    , 20000);
-            }
-        });
+    playID.update({
+        [choiceProperty]: yourPlay,
+        gameStatus: playerNum + "Submitted"
+    }).then(function () {
         playID.get().then(function (doc) {
             let curPlay = doc.data();
             let otherChoice = "";
@@ -143,46 +115,136 @@ $("input[name='p1']").click(function () {
                 otherChoice = curPlay.p1Choice;
             }
             if (otherChoice) {
-                outcome = rpslp[yourPlay][otherChoice];
-                if (outcome === 1) {
-                    winner = curPlay[playerNum];
-                }
-                else if (outcome === 0) {
-                    winner = curPlay[otherPlayer];
-                }
-                else { winner = "Draw"; }
-                playID.update({ pWinner: winner })
+                rpslk.doc(otherChoice).get().then(function (doc) {
+                    let outcome = doc.data().defeat;
+                    let outcomeMethod = doc.data().method;
+                    let winnerChoice = ""
+                    let loserChoice = ""
+                    if (outcome === 1) {
+                        winner = curPlay[playerNum];
+                        winnerChoice = yourPlay;
+                        loserChoice = otherChoice;
+                    }
+                    else if (outcome === 0) {
+                        winner = curPlay[otherPlayer];
+                        winnerChoice = otherChoice;
+                        loserChoice = yourPlay
+                    }
+                    else {
+                        winner = "Draw";
+                        winnerChoice = yourPlay;
+                        loserChoice = otherChoice;
+                    }
+                    playID.update({
+                        pWinner: winner,
+                        pWinMethod: winnerChoice + " " + outcomeMethod + " " + loserChoice,
+                        gameStatus: "finished"
+                    })
+                })
 
             }
         });
     });
-
 });
 
+//This is for playing again without resetting the entire interface.
 $("#replay").click(function () {
-    clearTimeout(replayTimer);
-    playID.onSnapshot(function () { });
-    playID.update({
-        p1Choice: "",
-        p2Choice: "",
-        pWinner: ""
-    }).then(function () {
-        $("input[name='p1']").prop("checked", false);
-    })
-})
+    //clearTimeout(replayTimer);
+    playID.get().then(function (doc) {
+        let replayStatus = doc.data().gameStatus
+        if (replayStatus === 'finished') {
+            playID.update({
+                gameStatus: "requestReplay",
+                replayRequester: player,
+                p1Choice : "",
+                p2Choice : "",
+                pWinMethod : "",
+                pWinner : ""
+            })
+        }
+        //playID.onSnapshot(function (){});
+        else if (replayStatus === "requestReplay") {
+            playID.update({ gameStatus: "playing" });
+        }
+    });
+});
+
 
 //TODO: add player name, not just player number.
 chatter.onSnapshot(function (snap) {
     let msg = snap.data().message;
-    let newMessage = $("<p>").text(playerNum + ": "  + msg);
+    let newMessage = $("<p>").text(playerNum + ": " + msg);
     $("#chatBox").prepend(newMessage);
 });
 
 $("#sendMsg").click(function () {
     let newMessage = $("#newMsg").val();
-    chatter.update({ 
-        message: newMessage, 
+    chatter.update({
+        message: newMessage,
 
     });
 });
 
+function setupFirestoreListener() {
+    playID.onSnapshot(function (snap) {
+        let gStatus = snap.data().gameStatus;
+        if (gStatus === "waiting") {
+            if (playerNum === "p1") {
+                $("#playerLabel").text("You are Player " + player);
+                $("#playerName").val("Waiting for opponent to join");
+                $("#newPlay").css("display", "none");
+                return true;
+            }
+        }
+        if (gStatus === "playing") {
+            if (playerNum === "p1") {
+                opponentName = snap.data().p2
+                if (!opponentName) {
+                    return false;
+                }
+                $("#playerName").val("").attr("placeholder", "You are playing " + opponentName)
+            }
+            else {
+                opponentName = snap.data().p1;
+                if (!opponentName) {
+                    return false;
+                }
+                $("#newPlay").css("display", "none");
+                $("#playerLabel").html("You are player " + player)
+                $("#playerName").val("").attr("placeholder", "You are playing " + opponentName);
+            }
+            $("#replay").css("display","none");
+            $("input[name='p1']").attr("disabled", false).prop("checked",false);
+            $("#rpslpChoices").css("display", "block");
+        }
+        if (gStatus === "finished") {
+            $("input[name='p1']").attr("disabled", true);
+            winMethod = snap.data().pWinMethod;
+            getWinner = snap.data().pWinner;
+            if (getWinner) {
+                $("#playerLabel").html("Winner: " + getWinner);
+                $("#playerName").val("").attr("placeholder", winMethod);
+                $("#replay").css("display", "inline-block");
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+        if (gStatus === "requestReplay") {
+            rRequester = snap.data().replayRequester
+            if (rRequester === player) {
+                $("#playerLabel").html("You are player " + player);
+                $("#playerName").attr("placeholder", "Waiting for " + opponentName).val("");
+                $("#replay").css("display","none");
+            }
+            
+            else{
+                $("#playerLabel").html("You are player " + player);
+                $("#playerName").attr("placeholder",opponentName + " has requested a replay.");
+                return true;
+            }
+        }
+        return false;
+    })
+}

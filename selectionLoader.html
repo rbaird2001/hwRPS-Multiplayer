@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Selection Loader</title>
+</head>
+
+<body>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/6.3.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.3.5/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.3.5/firebase-firestore.js"></script>
+
+    <script>
+
+        var firebaseConfig = {
+            apiKey: "AIzaSyC1nlsPzD47URLFbroPfG5aOyZREqH_-4k",
+            authDomain: "ropaslip.firebaseapp.com",
+            databaseURL: "https://ropaslip.firebaseio.com",
+            projectId: "ropaslip",
+            storageBucket: "",
+            messagingSenderId: "334383988417",
+            appId: "1:334383988417:web:ec700d273103dcec"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        let db = firebase.firestore();
+
+
+        var rpslk = {
+            rock: {
+                rock: {
+                    defeat: -1,
+                    method: "is"
+                },
+                paper: {
+                    defeat: 0,
+                    method: "wraps"
+                },
+                scissors: {
+                    defeat: 1,
+                    method: "crushes"
+                },
+                lizard: {
+                    defeat: 1,
+                    method: "smashes"
+                },
+                spock: {
+                    defeat: 0,
+                    method: "vaporizes"
+                },
+            },
+            paper: {
+                rock: {
+                    defeat: 1,
+                    method: "wraps"
+                },
+                paper: {
+                    defeat: -1,
+                    method: "is"
+                },
+                scissors: {
+                    defeat: 0,
+                    method: "cuts"
+                },
+                lizard: {
+                    defeat: 0,
+                    method: "eats"
+                },
+                spock: {
+                    defeat: 1,
+                    method: "disproves"
+                }
+            },
+            scissors: {
+                rock: {
+                    defeat: 0,
+                    method: "smashes"
+                },
+                paper: {
+                    defeat: 1,
+                    method: "cut"
+                },
+                scissors: {
+                    defeat: -1,
+                    method: "are"
+                },
+                lizard: {
+                    defeat: 1,
+                    method: "decapitates"
+                },
+                spock: {
+                    defeat: 0,
+                    method: "crushes"
+                }
+            },
+            lizard: {
+                rock: {
+                    defeat: 0,
+                    method: "smashes"
+                },
+                paper: {
+                    defeat: 1,
+                    method: "eats"
+                },
+                scissors: {
+                    defeat: 0,
+                    method: "decapitates"
+                },
+                lizard: {
+                    defeat: -1,
+                    method: "is"
+                },
+                spock: {
+                    defeat: 1,
+                    method: "poisons"
+                }
+            },
+            spock: {
+                rock: {
+                    defeat: 1,
+                    method: "vaporizes"
+                },
+                paper: {
+                    defeat: 0,
+                    method: "diproves"
+                },
+                scissors: {
+                    defeat: 1,
+                    method: "crushes"
+                },
+                lizard: {
+                    defeat: 0,
+                    method: "poisons"
+                },
+                spock: {
+                    defeat: -1,
+                    method: "is"
+                }
+            }
+        }
+
+        for (i = 0; i < Object.keys(rpslk).length; i++) {
+            let collName = Object.keys(rpslk)[i];
+            let coll = rpslk[collName];
+            for (j = 0; j < Object.keys(coll).length; j++) {
+                let docName = Object.keys(coll)[j];
+                let docFields = coll[docName];
+                db.collection(collName).doc(docName).set(docFields)
+            }
+        }
+
+    </script>
+</body>
+
+</html>
